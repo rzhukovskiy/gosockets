@@ -4,18 +4,17 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
+	"strconv"
 )
 
-var clients = make(map[string]*websocket.Conn)
+var clients = make(map[int64]*websocket.Conn)
 var broadcast = make(chan Message)
 
 var upgrader = websocket.Upgrader{}
 
 type Message struct {
-	Dialog  string `json:"dialog"`
-	User    string `json:"user"`
+	Dialog  int64  `json:"dialog"`
+	User    int64  `json:"user"`
 	Token   string `json:"token"`
 	Message string `json:"message"`
 }
@@ -26,7 +25,7 @@ func handleConnections(writer http.ResponseWriter, request *http.Request) {
 		log.Println("Client ID is missing")
 		return
 	}
-	clientId := clientIds[0]
+	clientId, _ := strconv.ParseInt(clientIds[0], 10, 64)
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(writer, request, nil)
@@ -57,29 +56,13 @@ func handleMessages() {
 	for {
 		message := <-broadcast
 
-		log.Println(message)
-
-		dialogUrl := "https://api.pm.iwad.ru/dialog/" + message.Dialog
-		bearer := "Bearer " + message.Token
-		form := url.Values{}
-		form.Add("message", message.Message)
-		req, err := http.NewRequest("POST", dialogUrl, strings.NewReader(form.Encode()))
-		req.Header.Add("Authorization", bearer)
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		httpClient := &http.Client{}
-		res, err := httpClient.Do(req)
-		if err != nil {
-			log.Println("Error on response.\n[ERRO] -", err)
-		}
-		defer res.Body.Close()
-
 		clientId := message.User
 		client, ok := clients[clientId]
 		if !ok {
 			continue
 		}
 
-		err = client.WriteJSON(message)
+		err := client.WriteJSON(message)
 		if err != nil {
 			log.Printf("error: %v", err)
 			client.Close()
