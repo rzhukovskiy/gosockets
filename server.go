@@ -57,20 +57,9 @@ func handleMessages() {
 	for {
 		message := <-broadcast
 
-		clientId := message.User
-		client, ok := clients[clientId]
-		if !ok {
-			continue
-		}
+		log.Println(message)
 
-		err := client.WriteJSON(message)
-		if err != nil {
-			log.Printf("error: %v", err)
-			client.Close()
-			delete(clients, clientId)
-		}
-
-		dialogUrl := "http://dating-api.local/dialog/" + message.Dialog
+		dialogUrl := "https://api.pm.iwad.ru/dialog/" + message.Dialog
 		bearer := "Bearer " + message.Token
 		form := url.Values{}
 		form.Add("message", message.Message)
@@ -83,6 +72,19 @@ func handleMessages() {
 			log.Println("Error on response.\n[ERRO] -", err)
 		}
 		defer res.Body.Close()
+
+		clientId := message.User
+		client, ok := clients[clientId]
+		if !ok {
+			continue
+		}
+
+		err = client.WriteJSON(message)
+		if err != nil {
+			log.Printf("error: %v", err)
+			client.Close()
+			delete(clients, clientId)
+		}
 	}
 }
 
