@@ -68,7 +68,6 @@ func handleConnections(writer http.ResponseWriter, request *http.Request) {
 
 		message := Message{User: userId, Data: data[0]}
 
-		log.Println(message)
 		broadcast <- message
 	}
 }
