@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -13,41 +14,61 @@ var broadcast = make(chan Message)
 var upgrader = websocket.Upgrader{}
 
 type Message struct {
-	Dialog  int64  `json:"dialog"`
-	User    int64  `json:"user"`
-	Token   string `json:"token"`
-	Message string `json:"message"`
+	User int64  "user"
+	Data string "data"
 }
 
 func handleConnections(writer http.ResponseWriter, request *http.Request) {
-	clientIds, ok := request.URL.Query()["clientId"]
-	if !ok {
-		log.Println("Client ID is missing")
-		return
-	}
-	clientId, _ := strconv.ParseInt(clientIds[0], 10, 64)
+	clientIds, hasClient := request.URL.Query()["clientId"]
 
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := upgrader.Upgrade(writer, request, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer ws.Close()
-
-	clients[clientId] = ws
-
-	for {
-		var message Message
-
-		err := ws.ReadJSON(&message)
-
+	if hasClient {
+		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+		ws, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(clients, clientId)
-			break
+			return
 		}
 
+		defer ws.Close()
+
+		clientId, _ := strconv.ParseInt(clientIds[0], 10, 64)
+		clients[clientId] = ws
+		for {
+			var message Message
+
+			err := ws.ReadJSON(&message)
+
+			if err != nil {
+				log.Printf("error: %v", err)
+				if hasClient {
+					delete(clients, clientId)
+				}
+				break
+			}
+
+			broadcast <- message
+		}
+	} else {
+		if err := request.ParseForm(); err != nil {
+			fmt.Printf("ParseForm() err: %v", err)
+			return
+		}
+
+		user, hasUser := request.PostForm["user"]
+		if !hasUser {
+			log.Println("User id required")
+			return
+		}
+		userId, _ := strconv.ParseInt(user[0], 10, 64)
+		data, hasData := request.PostForm["data"]
+		if !hasData {
+			log.Println("Data required")
+			return
+		}
+
+		message := Message{User: userId, Data: data[0]}
+
+		log.Println(message)
 		broadcast <- message
 	}
 }
@@ -62,7 +83,7 @@ func handleMessages() {
 			continue
 		}
 
-		err := client.WriteJSON(message)
+		err := client.WriteMessage(websocket.TextMessage, []byte(message.Data))
 		if err != nil {
 			log.Printf("error: %v", err)
 			client.Close()
@@ -76,9 +97,5 @@ func main() {
 	go handleMessages()
 
 	log.Println("http server started on :8000")
-	err := http.ListenAndServe(":8000", nil)
-
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+	log.Fatal("ListenAndServe: ", http.ListenAndServe(":8000", nil))
 }
