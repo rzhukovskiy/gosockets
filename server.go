@@ -14,8 +14,8 @@ var broadcast = make(chan Message)
 var upgrader = websocket.Upgrader{}
 
 type Message struct {
-	User int64  "user"
-	Data string "data"
+	User int64
+	Data string
 }
 
 func handleConnections(writer http.ResponseWriter, request *http.Request) {
