@@ -1,8 +1,8 @@
-package main
+package gosockets
 
 import (
 	"flag"
-	"gosockets/src/daemon"
+	"gosockets/daemon"
 	"log"
 )
 
