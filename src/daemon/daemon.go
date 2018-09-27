@@ -25,6 +25,7 @@ type Message struct {
 func checkUserId(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(r.URL.Query().Get("clientId")) == 0 {
+			log.Println("User id is missing")
 			http.Error(w, "User id is missing", http.StatusBadRequest)
 			return
 		}
@@ -33,7 +34,7 @@ func checkUserId(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func handleSockets(writer http.ResponseWriter, request *http.Request) {
-	clientIds, hasClient := request.URL.Query()["clientId"]
+	clientIds, _ := request.URL.Query()["clientId"]
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	ws, err := upgrader.Upgrade(writer, request, nil)
@@ -53,15 +54,13 @@ func handleSockets(writer http.ResponseWriter, request *http.Request) {
 
 		if err != nil {
 			log.Printf("error: %v", err)
-			if hasClient {
-				delete(clients, clientId)
-			}
+			delete(clients, clientId)
 			break
 		}
 	}
 }
 
-func handlePost(writer http.ResponseWriter, request *http.Request) {
+func handlePost(_ http.ResponseWriter, request *http.Request) {
 	if err := request.ParseForm(); err != nil {
 		fmt.Printf("ParseForm() err: %v", err)
 		return

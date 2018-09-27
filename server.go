@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"gosockets/daemon"
+	"gosockets/src/daemon"
 	"log"
 )
 
