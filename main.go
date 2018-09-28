@@ -1,4 +1,4 @@
-package gosockets
+package main
 
 import (
 	"flag"
