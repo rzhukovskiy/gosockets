@@ -9,7 +9,7 @@ import (
 func handleFlags() *daemon.Config {
 	config := &daemon.Config{}
 
-	flag.StringVar(&config.Listen, "listen", "localhost:8000", "HTTP listen")
+	flag.StringVar(&config.Listen, "listen", ":8000", "HTTP listen")
 
 	flag.Parse()
 	return config
