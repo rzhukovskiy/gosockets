@@ -5,10 +5,9 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"strconv"
 )
 
-var clients = make(map[int64]*websocket.Conn)
+var clients = make(map[string]*websocket.Conn)
 var broadcast = make(chan Message)
 
 var upgrader = websocket.Upgrader{}
@@ -18,7 +17,7 @@ type Config struct {
 }
 
 type Message struct {
-	User int64
+	User string
 	Data string
 }
 
@@ -45,7 +44,7 @@ func handleSockets(writer http.ResponseWriter, request *http.Request) {
 
 	defer ws.Close()
 
-	clientId, _ := strconv.ParseInt(clientIds[0], 10, 64)
+	clientId := clientIds[0]
 	clients[clientId] = ws
 	for {
 		var message Message
@@ -77,7 +76,7 @@ func handlePost(_ http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	userId, _ := strconv.ParseInt(user[0], 10, 64)
+	userId := user[0]
 	message := Message{User: userId, Data: data[0]}
 
 	broadcast <- message
