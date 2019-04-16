@@ -96,8 +96,8 @@ func handleMessages() {
 		if err != nil {
 			log.Printf("Message error: %v", err)
 			log.Printf("Message: %v", message.Data)
-			client.Close()
-			delete(clients, clientId)
+			//client.Close()
+			//delete(clients, clientId)
 		}
 	}
 }
