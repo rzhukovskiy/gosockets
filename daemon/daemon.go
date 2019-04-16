@@ -47,9 +47,7 @@ func handleSockets(writer http.ResponseWriter, request *http.Request) {
 	clientId := clientIds[0]
 	clients[clientId] = ws
 	for {
-		var message Message
-
-		err := ws.ReadJSON(&message)
+		_, _, err := ws.ReadMessage()
 
 		if err != nil {
 			log.Printf("Read error: %v", err)
@@ -76,8 +74,7 @@ func handlePost(_ http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	userId := user[0]
-	message := Message{User: userId, Data: data[0]}
+	message := Message{User: user[0], Data: data[0]}
 
 	broadcast <- message
 }
