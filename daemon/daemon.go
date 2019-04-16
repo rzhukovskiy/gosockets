@@ -53,8 +53,9 @@ func handleSockets(writer http.ResponseWriter, request *http.Request) {
 
 		if err != nil {
 			log.Printf("Read error: %v", err)
-			delete(clients, clientId)
-			break
+			log.Printf("Message: %v", message)
+			//delete(clients, clientId)
+			//break
 		}
 	}
 }
@@ -95,9 +96,8 @@ func handleMessages() {
 		err := client.WriteMessage(websocket.TextMessage, []byte(message.Data))
 		if err != nil {
 			log.Printf("Message error: %v", err)
-			log.Printf("Message: %v", message.Data)
-			//client.Close()
-			//delete(clients, clientId)
+			client.Close()
+			delete(clients, clientId)
 		}
 	}
 }
