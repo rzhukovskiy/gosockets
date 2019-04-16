@@ -95,6 +95,7 @@ func handleMessages() {
 		err := client.WriteMessage(websocket.TextMessage, []byte(message.Data))
 		if err != nil {
 			log.Printf("Message error: %v", err)
+			log.Printf("Message: %v", message.Data)
 			client.Close()
 			delete(clients, clientId)
 		}
